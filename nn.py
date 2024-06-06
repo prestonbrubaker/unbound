@@ -34,7 +34,7 @@ while True:
     magnitude = genes[i][3]
     r = random.uniform(0, 1)
     if(r < mut_c):
-      magnitude = random.uniform(-1, 1) * 10 ^ random.randint(-6, 1)
+      magnitude = random.uniform(-1, 1) * 10 ** random.randint(-6, 1)
       if(magnitude < -1):
         magnitude = -1
       if(magnitude > 1):
