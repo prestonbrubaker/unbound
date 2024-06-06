@@ -62,6 +62,7 @@ while True:
     result = state[-1]
     fitness += (y - result) ** 2
   if(fitness < best_fitness):
+    best_fitness = fitness
     print("Iteration: " + str(it_C) + " Fitness: " + str(fitness) + " Genes: " + str(genes_m))
     for i in range(0, len(genes)):  # Cycles through the genes to execute the instructions
       genes[i] = genes_m[i]
