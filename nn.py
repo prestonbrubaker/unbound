@@ -74,7 +74,7 @@ while True:
     with open('data.txt', 'a') as file:
       file.write(str(x) + " " + str(y) + " " + str(result) + "\n")
     fitness += (y - result) ** 2 / (test_points + 1) * 10000
-  if(fitness < best_fitness + 0.1):
+  if(fitness < best_fitness + 1):
     best_fitness = fitness
     print("Iteration: " + str(it_C) + " Fitness: " + str(fitness))
     for i in range(0, len(genes)):  # Cycles through the genes to execute the instructions
