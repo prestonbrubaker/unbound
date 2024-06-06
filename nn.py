@@ -63,7 +63,7 @@ while True:
           state[b] += magnitude * state[a]
     result = state[-1]
     with open('data.txt', 'a') as file:
-      file.write(str(x) + " " + str(y) + str(result) + "\n")
+      file.write(str(x) + " " + str(y) + " " + str(result) + "\n")
     fitness += (y - result) ** 2
   if(fitness < best_fitness):
     best_fitness = fitness
