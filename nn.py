@@ -12,7 +12,7 @@ genes = [ [0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]
 genes_m = []  # Genes of the mutant
 mut_c = 0.25
 it_C = 0
-test_points = 5
+test_points = 10
 
 
 best_fitness = 10000000
@@ -80,4 +80,4 @@ while True:
     for i in range(0, len(genes)):  # Cycles through the genes to execute the instructions
       genes[i] = genes_m[i]
   it_C += 1
-  #time.sleep(.001)
+  #time.sleep(.1)
