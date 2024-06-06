@@ -1,8 +1,6 @@
 import time
 import random
 
-# Created solely by Willoh
-
 state = [ 0, 0, 0, 0]  # the first node will be the input node, and the last will be the output node
 
 # a, b, c, d      a = index of the node to give, b = index of the node to recieve, c = mode of transfer (0: constant amount sent over if the giving node is positive, 1: fraction of giving node sent to recieving node, 2: contant amount given without subtraction from recieving node or check), d = magnitude of transfer
