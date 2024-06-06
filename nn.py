@@ -80,4 +80,4 @@ while True:
     for i in range(0, len(genes)):  # Cycles through the genes to execute the instructions
       genes[i] = genes_m[i]
   it_C += 1
-  #time.sleep(.1)
+  time.sleep(.1)
