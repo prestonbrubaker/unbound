@@ -50,7 +50,7 @@ while True:
   with open('gene.txt', 'w') as file:
       file.write(str(genes))
   for k in range(0, test_points):  # Tests the agent with various inputs and outputs
-    x = k / 10
+    x = k / test_points
     y = x ** 2
     for j in range(0, len(state)):
       state[j] = 0
