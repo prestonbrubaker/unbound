@@ -54,7 +54,7 @@ while True:
     y = x ** 2
     for j in range(0, len(state)):
       state[j] = 0
-    state[0] = 1
+    state[0] = x
     for i in range(0, len(genes)):  # Cycles through the genes to execute the instructions
       a = genes_m[i][0]
       b = genes_m[i][1]
