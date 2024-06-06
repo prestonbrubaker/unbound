@@ -9,6 +9,7 @@ state = [ 0, 0, 0, 0]  # the first node will be the input node, and the last wil
 genes = [ [0, 1, 1, 0.5], [1, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 3, 1, 1] ]
 genes_m = []  # Genes of the mutant
 mut_c = 0.1
+it_C = 0
 
 
 best_fitness = 10000000
@@ -61,8 +62,8 @@ while True:
     result = state[-1]
     fitness += (y - result) ** 2
   if(fitness < best_fitness):
-    print(fitness)
-    print(genes_m)
+    print("Iteration: " + str(it_C) + " Fitness: " + str(fitness) + " Genes: " + str(genes_m))
     for i in range(0, len(genes)):  # Cycles through the genes to execute the instructions
       genes[i] = genes_m[i]
+  it_C += 1
   time.sleep(10)
