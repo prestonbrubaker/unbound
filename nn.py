@@ -42,6 +42,8 @@ while True:
     genes_m.append([a, b, transfer_mode, magnitude])
 
   fitness = 0
+  with open('data.txt', 'w') as file:
+      file.write("")
   for k in range(0, 100):  # Tests the agent with various inputs and outputs
     x = k / 100
     y = x ** 2
@@ -60,6 +62,8 @@ while True:
         if(state[a] > 0):
           state[b] += magnitude * state[a]
     result = state[-1]
+    with open('data.txt', 'a') as file:
+      file.write(str(x) + " " + str(y) + str(result))
     fitness += (y - result) ** 2
   if(fitness < best_fitness):
     best_fitness = fitness
