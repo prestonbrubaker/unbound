@@ -71,8 +71,6 @@ while True:
       elif(transfer_mode == 2):
         state[b] += magnitude
     result = state[-1]
-    print(result)
-    print(y)
     with open('data.txt', 'a') as file:
       file.write(str(x) + " " + str(y) + " " + str(result) + "\n")
     fitness += (y - result) ** 2 / (test_points + 1) * 10000
