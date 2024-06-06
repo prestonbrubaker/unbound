@@ -14,6 +14,7 @@ best_fitness = 10000000
 
 while True:
   fitness = 0
+  state[0] = 1
   for i in range(0, len(genes)):
     a = genes[i][0]
     b = genes[i][1]
