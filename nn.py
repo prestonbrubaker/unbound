@@ -35,9 +35,9 @@ while True:
     r = random.uniform(0, 1)
     if(r < mut_c):
       magnitude = random.uniform(-1, 1) * 10 ** random.randint(-6, 1)
-      if(magnitude < -1):
+      if(magnitude < -2):
         magnitude = -1
-      if(magnitude > 1):
+      if(magnitude > 2):
         magnitude = 1
     genes_m.append([a, b, transfer_mode, magnitude])
 
@@ -58,9 +58,11 @@ while True:
       if(transfer_mode == 0):
         if(state[a] > 0):
           state[b] += magnitude
+          state[a] -= magnitude
       elif(transfer_mode == 1):
         if(state[a] > 0):
           state[b] += magnitude * state[a]
+          state[a] -= magnitude * state[a]
     result = state[-1]
     with open('data.txt', 'a') as file:
       file.write(str(x) + " " + str(y) + " " + str(result) + "\n")
