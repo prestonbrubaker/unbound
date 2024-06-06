@@ -12,6 +12,7 @@ genes = [ [0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]
 genes_m = []  # Genes of the mutant
 mut_c = 0.25
 it_C = 0
+test_points = 5
 
 
 best_fitness = 10000000
@@ -48,7 +49,7 @@ while True:
       file.write("")
   with open('gene.txt', 'w') as file:
       file.write(str(genes))
-  for k in range(0, 10):  # Tests the agent with various inputs and outputs
+  for k in range(0, test_points):  # Tests the agent with various inputs and outputs
     x = k / 10
     y = x ** 2
     for j in range(0, len(state)):
@@ -72,7 +73,7 @@ while True:
     result = state[-1]
     with open('data.txt', 'a') as file:
       file.write(str(x) + " " + str(y) + " " + str(result) + "\n")
-    fitness += (y - result) ** 2
+    fitness += (y - result) ** 2 / (test_points + 1) * 100
   if(fitness < best_fitness + 0.0001):
     best_fitness = fitness
     print("Iteration: " + str(it_C) + " Fitness: " + str(fitness) + " states: " + str(state))
