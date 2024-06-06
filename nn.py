@@ -21,11 +21,11 @@ while True:
     a = genes[i][0]
     r = random.uniform(0, 1)
     if(r < mut_c):
-      a = random.randint(0, len(genes) - 1)
+      a = random.randint(0, len(state) - 1)
     b = genes[i][1]
     r = random.uniform(0, 1)
     if(r < mut_c):
-      b = random.randint(0, len(genes) - 1)
+      b = random.randint(0, len(state) - 1)
     transfer_mode = genes[i][2]
     r = random.uniform(0, 1)
     if(r < mut_c):
@@ -44,6 +44,8 @@ while True:
   for k in range(0, 100):  # Tests the agent with various inputs and outputs
     x = k / 100
     y = x ** 2
+    for j in range(0, len(state)):
+      state[j] = 0
     state[0] = 1
     for i in range(0, len(genes)):  # Cycles through the genes to execute the instructions
       a = genes_m[i][0]
