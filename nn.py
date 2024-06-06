@@ -46,6 +46,8 @@ while True:
   fitness = 0
   with open('data.txt', 'w') as file:
       file.write("")
+  with open('gene.txt', 'w') as file:
+      file.write(str(genes))
   for k in range(0, 100):  # Tests the agent with various inputs and outputs
     x = k / 100
     y = x ** 2
@@ -71,7 +73,7 @@ while True:
     fitness += (y - result) ** 2
   if(fitness < best_fitness):
     best_fitness = fitness
-    print("Iteration: " + str(it_C) + " Fitness: " + str(fitness) + " Genes: " + str(genes_m))
+    print("Iteration: " + str(it_C) + " Fitness: " + str(fitness) + " states: " + str(state))
     for i in range(0, len(genes)):  # Cycles through the genes to execute the instructions
       genes[i] = genes_m[i]
   it_C += 1
