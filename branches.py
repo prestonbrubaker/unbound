@@ -24,7 +24,7 @@ state = [0, 0, 0, 0]  # the first node will be the input node, and the last will
 # a, b, c, d      a = index of the node to give, b = index of the node to receive, c = mode of transfer (0: constant amount sent over if the giving node is positive, 1: fraction of giving node sent to receiving node, 2: constant amount given without subtraction from receiving node or check), d = magnitude of transfer
 genes = [[0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 3, 1, 1]]
 genes_m = []  # Genes of the mutant
-mut_c = 0.09
+mut_c = 0.01
 it_C = 0
 test_points = 500
 agent_list = []
@@ -170,6 +170,16 @@ def mutate_agent(genes_in):
             if magnitude > 2:
                 magnitude = 1
         genes_out.append([a, b, transfer_mode, magnitude])
+    r = random.uniform(0, 1)
+    if r < mut_c:
+        genes_in.insert(random.randint(0, len(genes_in) - 1), genes_in[random.randint(0, len(genes_in) - 1)])
+    r = random.uniform(0, 1)
+    if r < mut_c:
+        genes_in.pop(random.randint(0, len(genes_in) - 1))
+    r = random.uniform(0, 1)
+    if r < mut_c:
+        genes_in.append(genes_in[random.randint(0, len(genes_in) - 1)])
+    
     return genes_out
 
 
