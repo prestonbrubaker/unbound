@@ -30,7 +30,7 @@ genes = [[0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1],
 genes_m = []  # Genes of the mutant
 mut_c = 0.005
 it_C = 0
-test_points = 25
+test_points = 100
 agent_list = []
 agent_fitness_list = []
 agent_count = 1000
@@ -247,15 +247,24 @@ while True:
 
 
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
-    for n in range(0, int(agent_count / 2)):
-        agent_list[-1 * (n + 1)] = mutate_agent(agent_list[random.randint(0, int(agent_count / 2))])
+    for n in range(0, int(4 * agent_count / 5)):
+        r = random.uniform(0, 1)
+        if(r < 0.85):
+            agent_list[-1 * (n + 1)] = mutate_agent(agent_list[random.randint(0, int(agent_count / 5))])
+        else:
+            r = random.uniform(0, 1)
+            if(r < 0.75):
+                agent_list[-1 * (n + 1)] = mutate_agent(agent_list[-1 * (n + 1)])
     
 
     
 
 
     print(agent_fitness_list[0])
-    best_fitness_log.append(math.log(agent_fitness_list[0]))
+    if(agent_fitness_list[0] > 0):
+        best_fitness_log.append(math.log(agent_fitness_list[0]))
+    else:
+        best_fitness_log.append(0)
     if(len(best_fitness_log) > 10000):
         for i in range(0, int(len(best_loss_log) / 2)):
             best_fitness_log.pop(-i * 2 + 1)
