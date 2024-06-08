@@ -5,18 +5,21 @@ import math
 pygame.init()
 
 # Contants for Pygame
-SCREEN_WIDTH = 1500
-SCREEN_HEIGHT = 900
+SCREEN_WIDTH = 1700
+SCREEN_HEIGHT = 950
 BAR_WIDTH = 3
 BAR_COLOR = (0, 128, 255)
 BACKGROUND_COLOR = (255, 255, 255)
 ACTUAL_COLOR = (255, 0, 0)
 GUESSED_COLOR = (0, 255, 0)
+LOG_COLOR = (0, 0, 0)
+FONT_SIZE = 24
+MARGIN_RATIO = 0.1  # 10% margin
 
 # Create Pygame screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Fitness Histogram')
-
+font = pygame.font.Font(None, FONT_SIZE)
 
 
 state = [0, 0, 0, 0]  # the first node will be the input node, and the last will be the output node.
@@ -34,38 +37,60 @@ best_fitness = 10000000
 guess_x = []
 guess_y = []
 guess_g = []
+best_fitness_log = []
 
 
 
 
-# Function to draw the histogram and graph
-def draw(fitness_values, guess_x, guess_y, guess_g):
+# Function to draw the histogram, graph, and fitness log
+def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitness):
     for i in range(len(fitness_values)):
         fitness_values[i] = math.log(fitness_values[i])
     screen.fill(BACKGROUND_COLOR)
     
-    # Draw Histogram on the left side
+    # Draw Histogram on the left side (1/3 of the screen)
     max_fitness = max(fitness_values) if fitness_values else 1
-    num_bars = min(len(fitness_values), SCREEN_WIDTH // (2 * BAR_WIDTH))
+    num_bars = min(len(fitness_values), (SCREEN_WIDTH // 3) // BAR_WIDTH)
     
     for i in range(num_bars):
         fitness = fitness_values[-(i+1)]  # Start from the end (highest fitness)
         bar_height = (fitness / max_fitness) * SCREEN_HEIGHT
-        x = (SCREEN_WIDTH // 2) - (i + 1) * BAR_WIDTH
+        x = (SCREEN_WIDTH // 3) - (i + 1) * BAR_WIDTH
         pygame.draw.rect(screen, BAR_COLOR, (x, SCREEN_HEIGHT - bar_height, BAR_WIDTH, bar_height))
     
-    # Draw Graph on the right side
-    graph_width = SCREEN_WIDTH // 2
+    # Draw Graph in the middle part (1/3 of the screen)
+    graph_width = SCREEN_WIDTH // 3
     graph_height = SCREEN_HEIGHT
     for i in range(len(guess_x) - 1):
-        actual_start = (graph_width + int(guess_x[i] * graph_width), graph_height - int(guess_y[i] * graph_height))
-        actual_end = (graph_width + int(guess_x[i + 1] * graph_width), graph_height - int(guess_y[i + 1] * graph_height))
-        guessed_start = (graph_width + int(guess_x[i] * graph_width), graph_height - int(guess_g[i] * graph_height))
-        guessed_end = (graph_width + int(guess_x[i + 1] * graph_width), graph_height - int(guess_g[i + 1] * graph_height))
+        actual_start = (SCREEN_WIDTH // 3 + int(guess_x[i] * graph_width), graph_height - int(guess_y[i] * graph_height))
+        actual_end = (SCREEN_WIDTH // 3 + int(guess_x[i + 1] * graph_width), graph_height - int(guess_y[i + 1] * graph_height))
+        guessed_start = (SCREEN_WIDTH // 3 + int(guess_x[i] * graph_width), graph_height - int(guess_g[i] * graph_height))
+        guessed_end = (SCREEN_WIDTH // 3 + int(guess_x[i + 1] * graph_width), graph_height - int(guess_g[i + 1] * graph_height))
         
         pygame.draw.line(screen, ACTUAL_COLOR, actual_start, actual_end, 2)
         pygame.draw.line(screen, GUESSED_COLOR, guessed_start, guessed_end, 2)
     
+    # Draw Fitness Log on the right side (1/3 of the screen) with margin
+    if fitness_log:
+        min_log = min(fitness_log)
+        max_log = max(fitness_log)
+        log_range = max_log - min_log if max_log - min_log != 0 else 1
+
+        margin = SCREEN_HEIGHT * MARGIN_RATIO
+        log_height = SCREEN_HEIGHT - 2 * margin
+        log_width = SCREEN_WIDTH // 3
+
+        for i in range(len(fitness_log) - 1):
+            log_start = (2 * SCREEN_WIDTH // 3 + int(i / len(fitness_log) * log_width), SCREEN_HEIGHT - margin - int((fitness_log[i] - min_log) / log_range * log_height))
+            log_end = (2 * SCREEN_WIDTH // 3 + int((i + 1) / len(fitness_log) * log_width), SCREEN_HEIGHT - margin - int((fitness_log[i + 1] - min_log) / log_range * log_height))
+            pygame.draw.line(screen, LOG_COLOR, log_start, log_end, 2)
+
+    # Display iteration count and best fitness
+    text_surface1 = font.render(f"Iteration: {it_C}", True, LOG_COLOR)
+    screen.blit(text_surface1, (10, 10))
+    text_surface2 = font.render(f"Best Fitness: {best_fitness:.6f}", True, LOG_COLOR)
+    screen.blit(text_surface2, (10, 10 + FONT_SIZE))
+
     pygame.display.flip()
 
 def initialize_population():
@@ -213,7 +238,7 @@ while True:
 
     # Draw the histogram
     guess_x, guess_y, guess_g = run_agent(agent_list[0], state)
-    draw(agent_fitness_list, guess_x, guess_y, guess_g)
+    draw(agent_fitness_list, guess_x, guess_y, guess_g, best_fitness_log, it_C, agent_fitness_list[0])
 
 
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
@@ -225,5 +250,9 @@ while True:
 
 
     print(agent_fitness_list[0])
+    best_fitness_log.append(math.log(agent_fitness_list[0]))
+    if(len(best_fitness_log) > 10000):
+        for i in range(0, int(len(best_loss_log) / 2)):
+            best_fitness_log.pop(-i * 2 + 1)
     it_C += 1
     time.sleep(0.01)
