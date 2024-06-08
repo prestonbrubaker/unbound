@@ -10,7 +10,8 @@ SCREEN_HEIGHT = 950
 BAR_WIDTH = 3
 BAR_COLOR = (0, 128, 255)
 BACKGROUND_COLOR = (255, 255, 255)
-ACTUAL_COLOR = (255, 0, 0)
+ACTUAL_COLOR_INSIDE = (255, 0, 0)
+ACTUAL_COLOR_OUTSIDE = (0, 0, 255)
 GUESSED_COLOR = (0, 255, 0)
 LOG_COLOR = (0, 0, 0)
 FONT_SIZE = 24
@@ -22,10 +23,10 @@ pygame.display.set_caption('Fitness Histogram')
 font = pygame.font.Font(None, FONT_SIZE)
 
 
-state = [0, 0, 0, 0]  # the first node will be the input node, and the last will be the output node.
+state = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # the first node will be the input node, and the last will be the output node.
 
 # a, b, c, d      a = index of the node to give, b = index of the node to receive, c = mode of transfer (0: constant amount sent over if the giving node is positive, 1: fraction of giving node sent to receiving node, 2: constant amount given without subtraction from receiving node or check), d = magnitude of transfer
-genes = [[0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 3, 1, 1]]
+genes = [[0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 3, 1, 1], [3, 4, 1, 1], [4, 5, 1, 1], [5, 6, 1, 1], [6, 7, 1, 1], [7, 8, 1, 1]]
 genes_m = []  # Genes of the mutant
 mut_c = 0.005
 it_C = 0
@@ -62,12 +63,14 @@ def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitn
     graph_width = SCREEN_WIDTH // 3
     graph_height = SCREEN_HEIGHT
     for i in range(len(guess_x) - 1):
-        actual_start = (SCREEN_WIDTH // 3 + int(guess_x[i] * graph_width), graph_height - int(guess_y[i] * graph_height))
-        actual_end = (SCREEN_WIDTH // 3 + int(guess_x[i + 1] * graph_width), graph_height - int(guess_y[i + 1] * graph_height))
-        guessed_start = (SCREEN_WIDTH // 3 + int(guess_x[i] * graph_width), graph_height - int(guess_g[i] * graph_height))
-        guessed_end = (SCREEN_WIDTH // 3 + int(guess_x[i + 1] * graph_width), graph_height - int(guess_g[i + 1] * graph_height))
-        
-        pygame.draw.line(screen, ACTUAL_COLOR, actual_start, actual_end, 2)
+        actual_start = (SCREEN_WIDTH // 3 + int((guess_x[i] / 1.2 + 0.1) * graph_width), graph_height - int(guess_y[i] * graph_height))
+        actual_end = (SCREEN_WIDTH // 3 + int((guess_x[i + 1] / 1.2 + 0.1) * graph_width), graph_height - int(guess_y[i + 1] * graph_height))
+        guessed_start = (SCREEN_WIDTH // 3 + int((guess_x[i] / 1.2 + 0.1) * graph_width), graph_height - int(guess_g[i] * graph_height))
+        guessed_end = (SCREEN_WIDTH // 3 + int((guess_x[i + 1] / 1.2 + 0.1) * graph_width), graph_height - int(guess_g[i + 1] * graph_height))
+        if(guess_x[i] >= 0 and guess_x[i + 1] <= 1):
+            pygame.draw.line(screen, ACTUAL_COLOR_INSIDE, actual_start, actual_end, 2)
+        else:
+            pygame.draw.line(screen, ACTUAL_COLOR_OUTSIDE, actual_start, actual_end, 2)
         pygame.draw.line(screen, GUESSED_COLOR, guessed_start, guessed_end, 2)
     
     # Draw Fitness Log on the right side (1/3 of the screen) with margin
@@ -145,7 +148,7 @@ def run_agent(genes_in, state_in):
     guess_y_out = []
     guess_g_out = []
     for k in range(0, test_points):  # Tests the agent with various inputs and outputs
-        x = k / test_points
+        x = k / test_points * 1.2 - 0.1
         guess_x_out.append(x)
         y = x ** 2
         guess_y_out.append(y)
@@ -174,6 +177,7 @@ def run_agent(genes_in, state_in):
 def mutate_agent(genes_in):
     genes_out = []
     mut_c_m = random.uniform(0, 1)
+    max_mag = random.randint(-9, 0)
     for i in range(0, len(genes_in)):  # Cycles through the genes to create a mutant
         a = genes_in[i][0]
         r = random.uniform(0, 1)
@@ -190,7 +194,7 @@ def mutate_agent(genes_in):
         magnitude = genes_in[i][3]
         r = random.uniform(0, 1)
         if r < mut_c * mut_c_m:
-            magnitude = random.uniform(-1, 1) * 10 ** random.randint(-8, 0)
+            magnitude = random.uniform(-1, 1) * 10 ** random.randint(-9, max_mag)
             if magnitude < -2:
                 magnitude = -1
             if magnitude > 2:
@@ -244,7 +248,7 @@ while True:
 
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
     for n in range(0, int(agent_count / 2)):
-        agent_list[-1 * (n + 1)] = mutate_agent(agent_list[n])
+        agent_list[-1 * (n + 1)] = mutate_agent(agent_list[random.randint(0, int(agent_count / 2))])
     
 
     
