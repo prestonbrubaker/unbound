@@ -72,11 +72,14 @@ def mutate_agent(genes_in):
     return genes_out
 
 
+
+
+
+
+
+
 while True:
     genes_m = mutate_agent(genes)
-    
-
-
     fitness = test_agent(genes_m, state)
 
     
