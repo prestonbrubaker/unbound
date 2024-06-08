@@ -10,6 +10,8 @@ SCREEN_HEIGHT = 900
 BAR_WIDTH = 3
 BAR_COLOR = (0, 128, 255)
 BACKGROUND_COLOR = (255, 255, 255)
+ACTUAL_COLOR = (255, 0, 0)
+GUESSED_COLOR = (0, 255, 0)
 
 # Create Pygame screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -29,24 +31,41 @@ agent_list = []
 agent_fitness_list = []
 agent_count = 1000
 best_fitness = 10000000
+guess_x = []
+guess_y = []
+guess_g = []
 
 
 
 
-
-# Function to draw the histogram
-def draw_histogram(fitness_values):
-    for i in range(0, len(fitness_values)):
+# Function to draw the histogram and graph
+def draw(fitness_values, guess_x, guess_y, guess_g):
+    for i in range(len(fitness_values)):
         fitness_values[i] = math.log(fitness_values[i])
     screen.fill(BACKGROUND_COLOR)
+    
+    # Draw Histogram on the left side
     max_fitness = max(fitness_values) if fitness_values else 1
-    num_bars = min(len(fitness_values), SCREEN_WIDTH // BAR_WIDTH)
+    num_bars = min(len(fitness_values), SCREEN_WIDTH // (2 * BAR_WIDTH))
     
     for i in range(num_bars):
         fitness = fitness_values[-(i+1)]  # Start from the end (highest fitness)
         bar_height = (fitness / max_fitness) * SCREEN_HEIGHT
-        x = SCREEN_WIDTH - (i + 1) * BAR_WIDTH
+        x = (SCREEN_WIDTH // 2) - (i + 1) * BAR_WIDTH
         pygame.draw.rect(screen, BAR_COLOR, (x, SCREEN_HEIGHT - bar_height, BAR_WIDTH, bar_height))
+    
+    # Draw Graph on the right side
+    graph_width = SCREEN_WIDTH // 2
+    graph_height = SCREEN_HEIGHT
+    for i in range(len(guess_x) - 1):
+        actual_start = (graph_width + int(guess_x[i] * graph_width), graph_height - int(guess_y[i] * graph_height))
+        actual_end = (graph_width + int(guess_x[i + 1] * graph_width), graph_height - int(guess_y[i + 1] * graph_height))
+        guessed_start = (graph_width + int(guess_x[i] * graph_width), graph_height - int(guess_g[i] * graph_height))
+        guessed_end = (graph_width + int(guess_x[i + 1] * graph_width), graph_height - int(guess_g[i + 1] * graph_height))
+        
+        pygame.draw.line(screen, ACTUAL_COLOR, actual_start, actual_end, 2)
+        pygame.draw.line(screen, GUESSED_COLOR, guessed_start, guessed_end, 2)
+    
     pygame.display.flip()
 
 def initialize_population():
@@ -60,6 +79,7 @@ def initialize_fitness_list():
     for i in range(0, agent_count):
         agent_fitness_list_out.append(0)
     return agent_fitness_list_out
+
 
 
 def test_agent(genes_in, state_in):
@@ -94,6 +114,37 @@ def test_agent(genes_in, state_in):
             file.write(str(x) + " " + str(y) + " " + str(result) + "\n")
         fitness_a += (y - result) ** 2 / (test_points + 1) * 10000
     return fitness_a
+
+def run_agent(genes_in, state_in):
+    guess_x_out = []
+    guess_y_out = []
+    guess_g_out = []
+    for k in range(0, test_points):  # Tests the agent with various inputs and outputs
+        x = k / test_points
+        guess_x_out.append(x)
+        y = x ** 2
+        guess_y_out.append(y)
+        for j in range(0, len(state_in)):
+            state_in[j] = 0
+        state_in[0] = x
+        for i in range(0, len(genes_in)):  # Cycles through the genes to execute the instructions
+            a = genes_in[i][0]
+            b = genes_in[i][1]
+            transfer_mode = genes_in[i][2]
+            magnitude = genes_in[i][3]
+            if transfer_mode == 0:
+                if state_in[a] > 0:
+                    state_in[b] += magnitude
+                    state_in[a] -= magnitude
+            elif transfer_mode == 1:
+                if state_in[a] > 0:
+                    state_in[b] += magnitude * state_in[a]
+                    state_in[a] -= magnitude * state_in[a]
+            elif transfer_mode == 2:
+                state_in[b] += magnitude
+        result = state_in[-1]
+        guess_g_out.append(result)
+    return guess_x_out, guess_y_out, guess_g_out
 
 def mutate_agent(genes_in):
     genes_out = []
@@ -133,6 +184,7 @@ agent_fitness_list = initialize_fitness_list()
 
 
 
+
 while True:
     genes_m = mutate_agent(genes)
     fitness = test_agent(genes_m, state)
@@ -150,7 +202,8 @@ while True:
 
 
     # Draw the histogram
-    draw_histogram(agent_fitness_list)
+    guess_x, guess_y, guess_g = run_agent(agent_list[0], state)
+    draw(agent_fitness_list, guess_x, guess_y, guess_g)
 
 
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
