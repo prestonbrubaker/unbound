@@ -173,22 +173,23 @@ def run_agent(genes_in, state_in):
 
 def mutate_agent(genes_in):
     genes_out = []
+    mut_c_m = random.uniform(0, 1)
     for i in range(0, len(genes_in)):  # Cycles through the genes to create a mutant
         a = genes_in[i][0]
         r = random.uniform(0, 1)
-        if r < mut_c:
+        if r < mut_c * mut_c_m:
             a = random.randint(0, len(state) - 1)
         b = genes_in[i][1]
         r = random.uniform(0, 1)
-        if r < mut_c:
+        if r < mut_c * mut_c_m:
             b = random.randint(0, len(state) - 1)
         transfer_mode = genes_in[i][2]
         r = random.uniform(0, 1)
-        if r < mut_c:
+        if r < mut_c * mut_c_m:
             transfer_mode = random.randint(0, 2)
         magnitude = genes_in[i][3]
         r = random.uniform(0, 1)
-        if r < mut_c:
+        if r < mut_c * mut_c_m:
             magnitude = random.uniform(-1, 1) * 10 ** random.randint(-8, 0)
             if magnitude < -2:
                 magnitude = -1
@@ -196,13 +197,13 @@ def mutate_agent(genes_in):
                 magnitude = 1
         genes_out.append([a, b, transfer_mode, magnitude])
     r = random.uniform(0, 1)
-    if r < mut_c:
+    if r < mut_c * mut_c_m:
         genes_in.insert(random.randint(0, len(genes_in) - 1), genes_in[random.randint(0, len(genes_in) - 1)])
     r = random.uniform(0, 1)
-    if r < mut_c:
+    if r < mut_c * mut_c_m:
         genes_in.pop(random.randint(0, len(genes_in) - 1))
     r = random.uniform(0, 1)
-    if r < mut_c:
+    if r < mut_c * mut_c_m:
         genes_in.append(genes_in[random.randint(0, len(genes_in) - 1)])
     
     return genes_out
