@@ -11,11 +11,11 @@ def get_text_color(node_color):
     h, l, s = colorsys.rgb_to_hls(r, g, b)      # Convert RGB to HLS (Hue, Lightness, Saturation)
     return 'white' if l < 0.5 else 'black'      # If lightness is below 0.5, use white text, otherwise use black text
 
-def draw_graph(state_in[0], genes_in[0]):
+def draw_graph(agent_state_count_list[0], agent_list[0]):
     G = nx.DiGraph()                            # This creates a directed graph object using NetworkX
     
     # Add nodes with labels as their values
-    for i in range(len(state)):
+    for i in range(len(agent_state_count_list[0]))
         G.add_node(i, label=f'{i}: {state[i]:.2f}', value=state[i])  # Add node to graph G with index i and label containing index and value from state list
     
     # Add edges

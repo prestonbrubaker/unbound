@@ -249,8 +249,8 @@ def mutate_agent(genes_in, agent_state_count_in):
 
 def save_state_and_genes(state_in, genes_in, filename='state_genes.json'):
     data = {
-        'state': state_in,
-        'genes': genes_in
+        'states_in': state_in,
+        'genes_in': genes_in
     }
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4)
