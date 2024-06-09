@@ -7,15 +7,12 @@ import matplotlib.cm as cm
 import colorsys
 
 def get_text_color(node_color):
-    # Convert RGBA to RGB
-    r, g, b, _ = node_color
-    # Convert RGB to HLS (Hue, Lightness, Saturation)
-    h, l, s = colorsys.rgb_to_hls(r, g, b)
-    # If lightness is below 0.5, use white text, otherwise use black text
-    return 'white' if l < 0.5 else 'black'
+    r, g, b, _ = node_color                     # Convert RGBA to RGB
+    h, l, s = colorsys.rgb_to_hls(r, g, b)      # Convert RGB to HLS (Hue, Lightness, Saturation)
+    return 'white' if l < 0.5 else 'black'      # If lightness is below 0.5, use white text, otherwise use black text
 
-def draw_graph(state, genes):
-    G = nx.DiGraph()  # This creates a directed graph object using NetworkX
+def draw_graph(state_in[0], genes_in[0]):
+    G = nx.DiGraph()                            # This creates a directed graph object using NetworkX
     
     # Add nodes with labels as their values
     for i in range(len(state)):
@@ -34,8 +31,7 @@ def draw_graph(state, genes):
     norm = plt.Normalize(min(node_values + edge_values), max(node_values + edge_values))
     
     # Create color maps
-    node_cmap = cm.ScalarMappable(norm=norm, cmap=cm.plasma)
-    edge_cmap = cm.ScalarMappable(norm=norm, cmap=cm.plasma)
+    node_cmap, edge_cmap = cm.ScalarMappable(norm=norm, cmap=cm.plasma)
     
     # Draw the graph
     pos = nx.spring_layout(G)  # You can use other layouts as well
