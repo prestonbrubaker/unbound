@@ -243,6 +243,14 @@ def mutate_agent(genes_in, agent_state_count_in):
     
     return genes_out, agent_state_count_out
 
+def save_state_and_genes(state_in, genes_in, filename='state_genes.json'):
+    data = {
+        'state': state_in,
+        'genes': genes_in
+    }
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=4)
+    print(f"State and genes saved to {os.path.abspath(filename)}")
 
 
 
@@ -276,6 +284,9 @@ while True:
     # Draw
     guess_x, guess_y, guess_g = run_agent(agent_list[0], agent_state_count_list[0])
     gene_length_list = []
+
+    save_state_and_genes(agent_state_count_list[0], agent_list[0])
+
     for i in range(0, len(agent_list)):
         gene_length_list.append(len(agent_list[i]))
     draw(agent_fitness_list, guess_x, guess_y, guess_g, best_fitness_log, it_C, agent_fitness_list[0], agent_state_count_list, gene_length_list)
