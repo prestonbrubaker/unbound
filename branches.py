@@ -162,6 +162,8 @@ def test_agent(genes_in, state_c_in):
         #with open('data.txt', 'a') as file:
         #    file.write(str(x) + " " + str(y) + " " + str(result) + "\n")
         fitness_a += (((y - result) ** 2) * 10000) / test_points
+    if(fitness_a < 0):
+        fitness_a *= -1
     return fitness_a
 
 def run_agent(genes_in, state_c_in):
