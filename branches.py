@@ -3,6 +3,9 @@ import random
 import pygame
 import math
 import statistics
+import json
+import os
+
 pygame.init()
 
 # Contants for Pygame
