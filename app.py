@@ -6,8 +6,8 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     try:
-        state, genes = load_state_and_genes()
-        image_base64 = draw_graph(state, genes)
+        states_in, genes_in = load_state_and_genes()
+        image_base64 = draw_graph(states_in, genes_in)
     except FileNotFoundError:
         return "State and genes file not found. Please ensure branches.py is running and saving the state and genes."
 
