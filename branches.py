@@ -233,6 +233,10 @@ def mutate_agent(genes_in, agent_state_count_in):
     if r < mut_c * mut_c_m:
         genes_in.pop(random.randint(0, len(genes_in) - 1))
     r = random.uniform(0, 1)
+    r = random.uniform(0, 1)
+    if r < mut_c * mut_c_m:
+        genes_in.pop(len(genes_in) - 1)
+    r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
         genes_in.append(genes_in[random.randint(0, len(genes_in) - 1)])
     r = random.uniform(0, 1)
