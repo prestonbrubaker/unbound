@@ -46,7 +46,7 @@ best_fitness_log = []
 
 
 # Function to draw the histogram, graph, and fitness log
-def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitness, agent_state_count_list_in):
+def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitness, agent_state_count_list_in, gene_length_list_in):
     for i in range(len(fitness_values)):
         fitness_values[i] = math.log(fitness_values[i])
     screen.fill(BACKGROUND_COLOR)
@@ -64,6 +64,7 @@ def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitn
     # Draw Graph in the middle part (1/3 of the screen)
     graph_width = SCREEN_WIDTH // 3
     graph_height = SCREEN_HEIGHT
+    margin = SCREEN_HEIGHT * MARGIN_RATIO
     for i in range(len(guess_x) - 1):
         actual_start = (SCREEN_WIDTH // 3 + int((guess_x[i] / 1.2 + 0.1) * graph_width), graph_height - int(guess_y[i] * graph_height))
         actual_end = (SCREEN_WIDTH // 3 + int((guess_x[i + 1] / 1.2 + 0.1) * graph_width), graph_height - int(guess_y[i + 1] * graph_height))
@@ -97,6 +98,8 @@ def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitn
     screen.blit(text_surface2, (10, 10 + FONT_SIZE))
     text_surface2 = font.render(f"Average # of Nodes: {statistics.mean(agent_state_count_list_in):.6f}", True, LOG_COLOR)
     screen.blit(text_surface2, (10, 10 + 2 * FONT_SIZE))
+    text_surface2 = font.render(f"Average # of Genes: {statistics.mean(gene_length_list_in):.6f}", True, LOG_COLOR)
+    screen.blit(text_surface2, (10, 10 + 3 * FONT_SIZE))
 
     pygame.display.flip()
 
@@ -155,7 +158,7 @@ def test_agent(genes_in, state_c_in):
         result = state_in[-1]
         #with open('data.txt', 'a') as file:
         #    file.write(str(x) + " " + str(y) + " " + str(result) + "\n")
-        fitness_a += ((y - result) ** 2) / (test_points) * 10000
+        fitness_a += (((y - result) ** 2) * 10000) / test_points
     return fitness_a
 
 def run_agent(genes_in, state_c_in):
@@ -257,6 +260,7 @@ agent_state_count_list = initialize_agent_state_count()
 while True:
 
     # Test all of the agents to get their fitness values
+    agent_fitness_list = initialize_fitness_list()
     for n in range(0, agent_count):
         agent_fitness_list[n] = test_agent(agent_list[n], agent_state_count_list[n])
     
@@ -271,10 +275,22 @@ while True:
 
     # Draw
     guess_x, guess_y, guess_g = run_agent(agent_list[0], agent_state_count_list[0])
-    draw(agent_fitness_list, guess_x, guess_y, guess_g, best_fitness_log, it_C, agent_fitness_list[0], agent_state_count_list)
+    gene_length_list = []
+    for i in range(0, len(agent_list)):
+        gene_length_list.append(len(agent_list[i]))
+    draw(agent_fitness_list, guess_x, guess_y, guess_g, best_fitness_log, it_C, agent_fitness_list[0], agent_state_count_list, gene_length_list)
 
-
+    print(agent_fitness_list[0])
+    if(agent_fitness_list[0] > 0):
+        best_fitness_log.append(math.log(agent_fitness_list[0]))
+    else:
+        best_fitness_log.append(0)
+    if(len(best_fitness_log) > 2000):
+        for i in range(0, int(len(best_fitness_log) / 2)):
+            best_fitness_log.pop(-i * 2 + 1)
+    
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
+    agent_fitness_list = initialize_fitness_list()
     for n in range(0, int(4 * agent_count / 5)):
         r = random.uniform(0, 1)
         if(r < 0.85):
@@ -285,17 +301,5 @@ while True:
             if(r < 0.75):
                 agent_list[-1 * (n + 1)], agent_state_count_list[-1 * (n + 1)] = mutate_agent(agent_list[-1 * (n + 1)], agent_state_count_list[-1 * (n + 1)])
     
-
-    
-
-
-    print(agent_fitness_list[0])
-    if(agent_fitness_list[0] > 0):
-        best_fitness_log.append(math.log(agent_fitness_list[0]))
-    else:
-        best_fitness_log.append(0)
-    if(len(best_fitness_log) > 2000):
-        for i in range(0, int(len(best_fitness_log) / 2)):
-            best_fitness_log.pop(-i * 2 + 1)
     it_C += 1
     time.sleep(0.01)
