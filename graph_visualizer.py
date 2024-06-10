@@ -26,7 +26,7 @@ def draw_graph(states_in, genes_in):
     G = nx.DiGraph()  # This creates a directed graph object using NetworkX
 
     # Define colors for different transfer modes
-    transfer_mode_colors = {0: 'pink', 1: 'yellow', 2: 'lightblue'}
+    transfer_mode_colors = {0: 'hotpink', 1: 'yellow', 2: 'lightblue'}
 
     # Add nodes with labels as gene indices and store magnitudes in node attributes
     for gene in genes_in:
