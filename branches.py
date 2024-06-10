@@ -252,9 +252,9 @@ def mutate_agent(genes_in, agent_state_count_in):
     
     return genes_out, agent_state_count_out
 
-def save_state_and_genes(state_in, genes_in, filename='state_genes.json'):
+def save_state_and_genes(state_c_in, genes_in, filename='state_genes.json'):
     data = {
-        'states_in': state_in,
+        'node_count_in': state_c_in,
         'genes_in': genes_in
     }
     with open(filename, 'w') as f:
@@ -305,9 +305,9 @@ while True:
         best_fitness_log.append(math.log(agent_fitness_list[0]))
     else:
         best_fitness_log.append(0)
-    if(len(best_fitness_log) > 2000):
-        for i in range(0, int(len(best_fitness_log) / 2)):
-            best_fitness_log.pop(-i * 2 + 1)
+    #if(len(best_fitness_log) > 2000):
+    #    for i in range(0, int(len(best_fitness_log) / 2)):
+    #        best_fitness_log.pop(-i * 2 + 1)
     
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
     agent_fitness_list = initialize_fitness_list()

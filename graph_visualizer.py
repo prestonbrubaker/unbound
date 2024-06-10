@@ -22,7 +22,7 @@ def create_grid_layout(G):
         pos[node] = (col, -row)
     return pos
 
-def draw_graph(states_in, genes_in):
+def draw_graph(node_count_in, genes_in):
     G = nx.DiGraph()  # This creates a directed graph object using NetworkX
 
     # Define colors for different transfer modes
@@ -31,6 +31,10 @@ def draw_graph(states_in, genes_in):
     # Add nodes with labels as gene indices and store magnitudes in node attributes
     for gene in genes_in:
         a, b, transfer_mode, magnitude = gene  # Unpack the individual values from gene
+        if a > (node_count_in - 1):
+            a = node_count_in - 1
+        if b > (node_count_in - 1):
+            b = node_count_in - 1
         G.add_node(a, label=f'{a}', magnitude=magnitude)
         G.add_node(b, label=f'{b}', magnitude=magnitude)
     
@@ -71,7 +75,6 @@ def draw_graph(states_in, genes_in):
         edge_color = transfer_mode_colors[transfer_mode]
         nx.draw_networkx_edges(G, pos, edgelist=[(a, b)], width=magnitude, edge_color=edge_color, arrowstyle='->', arrowsize=30, ax=ax)
     
-    # Remove edge labels
     edge_labels = {k: f'{v:.2f}' for k, v in nx.get_edge_attributes(G, 'magnitude').items()}
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax)
     
@@ -82,9 +85,9 @@ def draw_graph(states_in, genes_in):
         x, y = pos[node]
         node_color = node_colors[node]
         font_color = get_text_color(node_color)
-        plt.text(x, y, f'{label}\n{magnitudes[node]:.2f}', fontsize=8, ha='center', va='center', color=font_color)
+        plt.text(x, y, f'{label}', fontsize=8, ha='center', va='center', color=font_color)
     
-    # Add legend for edge colors with updated labels
+    # Add legend for edge colors 
     legend_labels = {0: 'Constant', 1: 'Fractional', 2: 'Shared'}
     for mode, color in transfer_mode_colors.items():
         plt.plot([], [], color=color, label=legend_labels[mode])
@@ -101,4 +104,4 @@ def load_state_and_genes(filename='state_genes.json'):
     with open(filename, 'r') as f:
         data = json.load(f)
     print(data)  # Add this line to inspect the loaded data
-    return data['states_in'], data['genes_in']
+    return data['node_count_in'], data['genes_in']
