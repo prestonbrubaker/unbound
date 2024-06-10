@@ -24,8 +24,15 @@ def create_grid_layout(G):
 
 def draw_graph(states_in, genes_in):
     G = nx.DiGraph()  # This creates a directed graph object using NetworkX
-    
-    G.add_node(0, label=f'{0}: {states_in:.2f}', value=states_in)
+
+    # Define colors for different transfer modes
+    transfer_mode_colors = {0: 'pink', 1: 'yellow', 2: 'lightblue'}
+
+    # Add nodes with labels as gene indices and store magnitudes in node attributes
+    for gene in genes_in:
+        a, b, transfer_mode, magnitude = gene  # Unpack the individual values from gene
+        G.add_node(a, label=f'{a}', magnitude=magnitude)
+        G.add_node(b, label=f'{b}', magnitude=magnitude)
     
     # Add edges
     for gene in genes_in:
@@ -43,9 +50,8 @@ def draw_graph(states_in, genes_in):
     # Normalize the values
     norm = plt.Normalize(min(node_values + edge_values), max(node_values + edge_values))
     
-    # Create color maps
+    # Create color maps for nodes
     node_cmap = cm.ScalarMappable(norm=norm, cmap=cm.jet)
-    edge_cmap = cm.ScalarMappable(norm=norm, cmap=cm.jet)
     
     # Draw the graph
     plt.figure(figsize=(12, 8))
@@ -57,31 +63,36 @@ def draw_graph(states_in, genes_in):
     node_colors = [node_cmap.to_rgba(data.get('value', 0)) for _, data in G.nodes(data=True)]
     nx.draw_networkx_nodes(G, pos, node_size=1000, node_color=node_colors, ax=ax)
     
-    # Draw edges
-    edge_colors = [edge_cmap.to_rgba(data.get('value', 0)) for _, _, data in G.edges(data=True)]
-    nx.draw_networkx_edges(G, pos, edge_color=edge_colors, arrowstyle='->', arrowsize=40, ax=ax)
+    # Draw edges with colors based on transfer mode and width based on magnitude
+    for edge in G.edges(data=True):
+        a, b, data = edge
+        transfer_mode = data['transfer_mode']
+        magnitude = data['magnitude']
+        edge_color = transfer_mode_colors[transfer_mode]
+        nx.draw_networkx_edges(G, pos, edgelist=[(a, b)], width=magnitude, edge_color=edge_color, arrowstyle='->', arrowsize=30, ax=ax)
     
-    # Draw edge labels
-    edge_labels = nx.get_edge_attributes(G, 'magnitude')
+    # Remove edge labels
+    edge_labels = {k: f'{v:.2f}' for k, v in nx.get_edge_attributes(G, 'magnitude').items()}
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax)
     
     # Draw node labels with dynamic text color
     labels = nx.get_node_attributes(G, 'label')
+    magnitudes = nx.get_node_attributes(G, 'magnitude')
     for node, label in labels.items():
         x, y = pos[node]
         node_color = node_colors[node]
         font_color = get_text_color(node_color)
-        plt.text(x, y, label, fontsize=8, ha='center', va='center', color=font_color)
+        plt.text(x, y, f'{label}\n{magnitudes[node]:.2f}', fontsize=8, ha='center', va='center', color=font_color)
     
-    # Add legend
-    sm = plt.cm.ScalarMappable(cmap=cm.jet, norm=norm)
-    sm.set_array([])
-    cbar = plt.colorbar(sm, ax=ax)
-    cbar.set_label('Values')
+    # Add legend for edge colors with updated labels
+    legend_labels = {0: 'Constant', 1: 'Fractional', 2: 'Shared'}
+    for mode, color in transfer_mode_colors.items():
+        plt.plot([], [], color=color, label=legend_labels[mode])
+    plt.legend(title='Transfer Modes', loc='upper left', bbox_to_anchor=(1, 1))
 
     # Save the image to a BytesIO object
     buf = BytesIO()
-    plt.savefig(buf, format='png')
+    plt.savefig(buf, format='png', bbox_inches='tight')
     plt.close()
     buf.seek(0)
     return base64.b64encode(buf.getvalue()).decode('utf-8')
