@@ -38,7 +38,7 @@ test_points = 100
 agent_list = []             # List containing the genes/instructions for each agent
 agent_state_count_list = [] # List containing the number of nodes each agent has
 agent_fitness_list = []     # List containing the fitness of each agent
-agent_count = 1000
+agent_count = 500
 best_fitness = 10000000
 guess_x = []
 guess_y = []
@@ -56,14 +56,24 @@ def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitn
     screen.fill(BACKGROUND_COLOR)
     
     # Draw Histogram on the left side (1/3 of the screen)
-    max_log_fitness = max(log_fitness_values) if log_fitness_values else 1
+    if log_fitness_values:
+        max_log_fitness = max(log_fitness_values)
+        min_log_fitness = min(log_fitness_values)
+    else:
+        max_log_fitness = 1
+        min_log_fitness = 0
+        
+    range_log_fitness = max_log_fitness - min_log_fitness if max_log_fitness != min_log_fitness else 1
     num_bars = min(len(log_fitness_values), (SCREEN_WIDTH // 3) // BAR_WIDTH)
+    red_threshold = int(num_bars * 0.1)
     
     for i in range(num_bars):
         log_fitness = log_fitness_values[-(i+1)]  # Start from the end (highest fitness)
-        bar_height = (log_fitness / max_log_fitness) * SCREEN_HEIGHT
+        normalized_fitness = (log_fitness - min_log_fitness) / range_log_fitness
+        bar_height = normalized_fitness * SCREEN_HEIGHT
         x = (SCREEN_WIDTH // 3) - (i + 1) * BAR_WIDTH
-        pygame.draw.rect(screen, BAR_COLOR, (x, SCREEN_HEIGHT - bar_height, BAR_WIDTH, bar_height))
+        bar_color = (255, 0, 0) if i > num_bars - red_threshold else BAR_COLOR
+        pygame.draw.rect(screen, bar_color, (x, SCREEN_HEIGHT - bar_height, BAR_WIDTH, bar_height))
     
     # Draw Graph in the middle part (1/3 of the screen)
     graph_width = SCREEN_WIDTH // 3
@@ -189,7 +199,7 @@ def run_agent(genes_in, state_c_in):
     return guess_x_out, guess_y_out, guess_g_out
 
 def mutate_agent(genes_in, agent_state_count_in):
-    genes_out = genes_in  # Create a deep copy of genes_in
+    genes_out = []
     agent_state_count_out = agent_state_count_in
     mut_c_m = random.uniform(0, 1)
     max_mag = random.randint(-9, 0)
@@ -217,16 +227,18 @@ def mutate_agent(genes_in, agent_state_count_in):
         genes_out.append([a, b, transfer_mode, magnitude])
     r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
-        genes_in.insert(random.randint(0, len(genes_in) - 1), genes_in[random.randint(0, len(genes_in) - 1)])
+        ridx = random.randint(0, len(genes_out) - 1)
+        if(ridx < len(genes_out)):
+            genes_out.insert(ridx, genes_in[random.randint(0, len(genes_in) - 1)])
     r = random.uniform(0, 1)
-    if r < mut_c * mut_c_m and len(genes_in) > 1:
-        genes_in.pop(random.randint(0, len(genes_in) - 1))
+    if r < mut_c * mut_c_m and len(genes_out) > 1:
+        genes_out.pop(random.randint(0, len(genes_out) - 1))
     r = random.uniform(0, 1)
-    if r < mut_c * mut_c_m and len(genes_in) > 1:
-        genes_in.pop(len(genes_in) - 1)
+    if r < mut_c * mut_c_m and len(genes_out) > 1:
+        genes_out.pop(len(genes_out) - 1)
     r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
-        genes_in.append(genes_in[random.randint(0, len(genes_in) - 1)])
+        genes_out.append(genes_in[random.randint(0, len(genes_in) - 1)])
     r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
         agent_state_count_out += random.randint(-1, 1)
@@ -253,16 +265,14 @@ while True:
     for n in range(0, agent_count):
         agent_fitness_list[n] = test_agent(agent_list[n], agent_state_count_list[n])
     
-    # Ensure fitness values are non-negative
-    agent_fitness_list = [abs(fitness) for fitness in agent_fitness_list]
-
     # Sort the agents by their fitness values
-    sorted_indices = sorted(range(agent_count), key=lambda i: agent_fitness_list[i])
+    combined = list(zip(agent_fitness_list, agent_list, agent_state_count_list))
+    combined = sorted(combined, key=lambda x: x[0])
+    agent_fitness_list, agent_list, agent_state_count_list = zip(*combined)
+    agent_fitness_list = list(agent_fitness_list)
+    agent_list = list(agent_list)
+    agent_state_count_list = list(agent_state_count_list)
 
-    # Create new sorted lists based on the sorted indices
-    agent_fitness_list = [agent_fitness_list[i] for i in sorted_indices]
-    agent_list = [agent_list[i] for i in sorted_indices]
-    agent_state_count_list = [agent_state_count_list[i] for i in sorted_indices]
 
     print(agent_fitness_list[0])
 
@@ -281,15 +291,13 @@ while True:
         best_fitness_log.append(0)
     
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
-    for n in range(0, int(4 * agent_count / 5)):
+    for n in range(int(0.2 * agent_count), agent_count):
         r = random.uniform(0, 1)
         if(r < 0.85):
-            index = random.randint(0, int(agent_count / 5))
-            agent_list[-1 * (n + 1)], agent_state_count_list[-1 * (n + 1)] = mutate_agent(agent_list[index], agent_state_count_list[index])
+            index = random.randint(0, int(agent_count * .2))
+            agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[index], agent_state_count_list[index])
         else:
-            r = random.uniform(0, 1)
-            if(r < 0.75):
-                agent_list[-1 * (n + 1)], agent_state_count_list[-1 * (n + 1)] = mutate_agent(agent_list[-1 * (n + 1)], agent_state_count_list[-1 * (n + 1)])
+            agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[n], agent_state_count_list[n])
     
     it_C += 1
     time.sleep(0.01)
