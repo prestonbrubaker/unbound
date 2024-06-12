@@ -29,16 +29,16 @@ font = pygame.font.Font(None, FONT_SIZE)
 
 state = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # the first node will be the input node, and the last will be the output node.
 
-# a, b, c, d      a = index of the node to give, b = index of the node to receive, c = mode of transfer (0: constant amount sent over if the giving node is positive, 1: fraction of giving node sent to receiving node, 2: constant amount given without subtraction from receiving node or check), d = magnitude of transfer
+# a, b, c, d      a = index of the node to give, b = index of the node to receive, c = mode of transfer (0: constant amount sent over if the giving node is positive, 1: fraction of giving node sent to receiving node, 2: constant amount given without subtraction from receiving node or check, 3: sine of node a is taken to be node b), d = magnitude of transfer
 genes = [[0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 3, 1, 1], [3, 4, 1, 1], [4, 5, 1, 1], [5, 6, 1, 1], [6, 7, 1, 1], [7, 8, 1, 1]]
 genes_m = []  # Genes of the mutant
-mut_c = 0.005
+mut_c = .9999
 it_C = 0
 test_points = 100
 agent_list = []             # List containing the genes/instructions for each agent
 agent_state_count_list = [] # List containing the number of nodes each agent has
 agent_fitness_list = []     # List containing the fitness of each agent
-agent_count = 1000
+agent_count = 500
 best_fitness = 10000000
 guess_x = []
 guess_y = []
@@ -50,19 +50,30 @@ best_fitness_log = []
 
 # Function to draw the histogram, graph, and fitness log
 def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitness, agent_state_count_list_in, gene_length_list_in):
+    log_fitness_values = []
     for i in range(len(fitness_values)):
-        fitness_values[i] = math.log(fitness_values[i])
+        log_fitness_values.append(math.log(fitness_values[i]))
     screen.fill(BACKGROUND_COLOR)
     
     # Draw Histogram on the left side (1/3 of the screen)
-    max_fitness = max(fitness_values) if fitness_values else 1
-    num_bars = min(len(fitness_values), (SCREEN_WIDTH // 3) // BAR_WIDTH)
+    if log_fitness_values:
+        max_log_fitness = max(log_fitness_values)
+        min_log_fitness = min(log_fitness_values)
+    else:
+        max_log_fitness = 1
+        min_log_fitness = 0
+        
+    range_log_fitness = max_log_fitness - min_log_fitness if max_log_fitness != min_log_fitness else 1
+    num_bars = min(len(log_fitness_values), (SCREEN_WIDTH // 3) // BAR_WIDTH)
+    red_threshold = int(num_bars * 0.1)
     
     for i in range(num_bars):
-        fitness = fitness_values[-(i+1)]  # Start from the end (highest fitness)
-        bar_height = (fitness / max_fitness) * SCREEN_HEIGHT
+        log_fitness = log_fitness_values[-(i+1)]  # Start from the end (highest fitness)
+        normalized_fitness = (log_fitness - min_log_fitness) / range_log_fitness
+        bar_height = normalized_fitness * SCREEN_HEIGHT
         x = (SCREEN_WIDTH // 3) - (i + 1) * BAR_WIDTH
-        pygame.draw.rect(screen, BAR_COLOR, (x, SCREEN_HEIGHT - bar_height, BAR_WIDTH, bar_height))
+        bar_color = (255, 0, 0) if i > num_bars - red_threshold else BAR_COLOR
+        pygame.draw.rect(screen, bar_color, (x, SCREEN_HEIGHT - bar_height, BAR_WIDTH, bar_height))
     
     # Draw Graph in the middle part (1/3 of the screen)
     graph_width = SCREEN_WIDTH // 3
@@ -124,12 +135,38 @@ def initialize_agent_state_count():
         agent_state_count_list_out.append(len(state))
     return agent_state_count_list_out
 
+def evaluate_agent(x_in, genes_inn, state_inn):
+    state_inn[0] = x_in
+    i = 0
+    while(i < len(genes_inn)):  # Runs through the genes to execute the instructions
+        a = genes_inn[i][0]
+        if(a > len(state_inn) - 1):
+            a = len(state_inn) - 1
+        b = genes_inn[i][1]
+        if(b > len(state_inn) - 1):
+            b = len(state_inn) - 1
+        transfer_mode = genes_inn[i][2]
+        magnitude = genes_inn[i][3]
+        if transfer_mode == 0:
+            if state_inn[a] > 0:
+                state_inn[b] += magnitude
+                state_inn[a] -= magnitude
+        elif transfer_mode == 1:
+            if state_inn[a] > 0:
+                state_inn[b] += magnitude * state_inn[a]
+                state_inn[a] -= magnitude * state_inn[a]
+        elif transfer_mode == 2:
+            state_inn[b] += magnitude
+        elif transfer_mode == 3:
+            if(state_inn[a] > 0):
+                state_inn[b] += math.sin(state_inn[a])
+                state_inn[a] -= math.sin(state_inn[a])
+        i += 1
+    result = state_inn[-1]
+    return result
+
 def test_agent(genes_in, state_c_in):
     fitness_a = 0
-    #with open('data.txt', 'w') as file:
-    #    file.write("")
-    #with open('gene.txt', 'w') as file:
-    #    file.write(str(genes_in))
     state_in = []
     for i in range(0, state_c_in):
         state_in.append(0)
@@ -137,33 +174,10 @@ def test_agent(genes_in, state_c_in):
         for i in range(0, state_c_in):
             state_in[i] = 0
         x = k / test_points
-        y = x ** 2
-        state_in[0] = x
-        for i in range(0, len(genes_in)):  # Cycles through the genes to execute the instructions
-            a = genes_in[i][0]
-            if(a > state_c_in - 1):
-                a = state_c_in - 1
-            b = genes_in[i][1]
-            if(b > state_c_in - 1):
-                b = state_c_in - 1
-            transfer_mode = genes_in[i][2]
-            magnitude = genes_in[i][3]
-            if transfer_mode == 0:
-                if state_in[a] > 0:
-                    state_in[b] += magnitude
-                    state_in[a] -= magnitude
-            elif transfer_mode == 1:
-                if state_in[a] > 0:
-                    state_in[b] += magnitude * state_in[a]
-                    state_in[a] -= magnitude * state_in[a]
-            elif transfer_mode == 2:
-                state_in[b] += magnitude
-        result = state_in[-1]
-        #with open('data.txt', 'a') as file:
-        #    file.write(str(x) + " " + str(y) + " " + str(result) + "\n")
-        fitness_a += (((y - result) ** 2) * 10000) / test_points
-    if(fitness_a < 0):
-        fitness_a *= -1
+        y = math.sin(x * 2 * 3.142) / 2 + 0.5
+        result = evaluate_agent(x, genes_in, state_in)
+        se = (y - result)**2
+        fitness_a += se
     return fitness_a
 
 def run_agent(genes_in, state_c_in):
@@ -178,29 +192,9 @@ def run_agent(genes_in, state_c_in):
             state_in[i] = 0
         x = k / test_points * 1.2 - 0.1
         guess_x_out.append(x)
-        y = x ** 2
+        y = math.sin(x * 2 * 3.142) / 2 + 0.5
         guess_y_out.append(y)
-        state_in[0] = x
-        for i in range(0, len(genes_in)):  # Cycles through the genes to execute the instructions
-            a = genes_in[i][0]
-            if(a > state_c_in - 1):
-                a = state_c_in - 1
-            b = genes_in[i][1]
-            if(b > state_c_in - 1):
-                b = state_c_in - 1
-            transfer_mode = genes_in[i][2]
-            magnitude = genes_in[i][3]
-            if transfer_mode == 0:
-                if state_in[a] > 0:
-                    state_in[b] += magnitude
-                    state_in[a] -= magnitude
-            elif transfer_mode == 1:
-                if state_in[a] > 0:
-                    state_in[b] += magnitude * state_in[a]
-                    state_in[a] -= magnitude * state_in[a]
-            elif transfer_mode == 2:
-                state_in[b] += magnitude
-        result = state_in[-1]
+        result = evaluate_agent(x, genes_in, state_in)
         guess_g_out.append(result)
     return guess_x_out, guess_y_out, guess_g_out
 
@@ -213,15 +207,15 @@ def mutate_agent(genes_in, agent_state_count_in):
         a = genes_in[i][0]
         r = random.uniform(0, 1)
         if r < mut_c * mut_c_m:
-            a = random.randint(0, len(state) - 1)
+            a = random.randint(0, agent_state_count_in - 1)
         b = genes_in[i][1]
         r = random.uniform(0, 1)
         if r < mut_c * mut_c_m:
-            b = random.randint(0, len(state) - 1)
+            b = random.randint(0, agent_state_count_in - 1)
         transfer_mode = genes_in[i][2]
         r = random.uniform(0, 1)
         if r < mut_c * mut_c_m:
-            transfer_mode = random.randint(0, 2)
+            transfer_mode = random.randint(0, 3)
         magnitude = genes_in[i][3]
         r = random.uniform(0, 1)
         if r < mut_c * mut_c_m:
@@ -233,17 +227,18 @@ def mutate_agent(genes_in, agent_state_count_in):
         genes_out.append([a, b, transfer_mode, magnitude])
     r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
-        genes_in.insert(random.randint(0, len(genes_in) - 1), genes_in[random.randint(0, len(genes_in) - 1)])
+        ridx = random.randint(0, len(genes_out) - 1)
+        if(ridx < len(genes_out)):
+            genes_out.insert(ridx, genes_in[random.randint(0, len(genes_in) - 1)])
+    r = random.uniform(0, 1)
+    if r < mut_c * mut_c_m and len(genes_out) > 1:
+        genes_out.pop(random.randint(0, len(genes_out) - 1))
+    r = random.uniform(0, 1)
+    if r < mut_c * mut_c_m and len(genes_out) > 1:
+        genes_out.pop(len(genes_out) - 1)
     r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
-        genes_in.pop(random.randint(0, len(genes_in) - 1))
-    r = random.uniform(0, 1)
-    r = random.uniform(0, 1)
-    if r < mut_c * mut_c_m:
-        genes_in.pop(len(genes_in) - 1)
-    r = random.uniform(0, 1)
-    if r < mut_c * mut_c_m:
-        genes_in.append(genes_in[random.randint(0, len(genes_in) - 1)])
+        genes_out.append(genes_in[random.randint(0, len(genes_in) - 1)])
     r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
         agent_state_count_out += random.randint(-1, 1)
@@ -251,17 +246,6 @@ def mutate_agent(genes_in, agent_state_count_in):
             agent_state_count_out = 1
     
     return genes_out, agent_state_count_out
-
-def save_state_and_genes(state_c_in, genes_in, filename='state_genes.json'):
-    data = {
-        'node_count_in': state_c_in,
-        'genes_in': genes_in
-    }
-    with open(filename, 'w') as f:
-        json.dump(data, f, indent=4)
-    print(f"State and genes saved to {os.path.abspath(filename)}")
-
-
 
 
 
@@ -290,36 +274,30 @@ while True:
     agent_state_count_list = list(agent_state_count_list)
 
 
+    print(agent_fitness_list[0])
+
     # Draw
     guess_x, guess_y, guess_g = run_agent(agent_list[0], agent_state_count_list[0])
     gene_length_list = []
-
-    save_state_and_genes(agent_state_count_list[0], agent_list[0])
 
     for i in range(0, len(agent_list)):
         gene_length_list.append(len(agent_list[i]))
     draw(agent_fitness_list, guess_x, guess_y, guess_g, best_fitness_log, it_C, agent_fitness_list[0], agent_state_count_list, gene_length_list)
 
-    print(agent_fitness_list[0])
+    
     if(agent_fitness_list[0] > 0):
         best_fitness_log.append(math.log(agent_fitness_list[0]))
     else:
         best_fitness_log.append(0)
-    #if(len(best_fitness_log) > 2000):
-    #    for i in range(0, int(len(best_fitness_log) / 2)):
-    #        best_fitness_log.pop(-i * 2 + 1)
     
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
-    agent_fitness_list = initialize_fitness_list()
-    for n in range(0, int(4 * agent_count / 5)):
+    for n in range(int(0.2 * agent_count), agent_count):
         r = random.uniform(0, 1)
         if(r < 0.85):
-            index = random.randint(0, int(agent_count / 5))
-            agent_list[-1 * (n + 1)], agent_state_count_list[-1 * (n + 1)] = mutate_agent(agent_list[index], agent_state_count_list[index])
+            index = random.randint(0, int(agent_count * .2))
+            agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[index], agent_state_count_list[index])
         else:
-            r = random.uniform(0, 1)
-            if(r < 0.75):
-                agent_list[-1 * (n + 1)], agent_state_count_list[-1 * (n + 1)] = mutate_agent(agent_list[-1 * (n + 1)], agent_state_count_list[-1 * (n + 1)])
+            agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[n], agent_state_count_list[n])
     
     it_C += 1
     time.sleep(0.01)

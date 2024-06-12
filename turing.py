@@ -32,7 +32,7 @@ state = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # the first node will be the input node, an
 # a, b, c, d      a = index of the node to give, b = index of the node to receive, c = mode of transfer (0: constant amount sent over if the giving node is positive, 1: fraction of giving node sent to receiving node, 2: constant amount given without subtraction from receiving node or check, 3: sine of node a is taken to be node b), d = magnitude of transfer
 genes = [[0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 3, 1, 1], [3, 4, 1, 1], [4, 5, 1, 1], [5, 6, 1, 1], [6, 7, 1, 1], [7, 8, 1, 1]]
 genes_m = []  # Genes of the mutant
-mut_c = .9
+mut_c = .9999
 it_C = 0
 test_points = 100
 agent_list = []             # List containing the genes/instructions for each agent
