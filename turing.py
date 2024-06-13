@@ -42,15 +42,15 @@ genes = [[0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1],
 genes_m = []  # Genes of the mutant
 mut_c = .5
 it_C = 0
-test_points = 40
+test_points = 20
 agent_list = []             # List containing the genes/instructions for each agent
 agent_state_count_list = [] # List containing the number of nodes each agent has
 agent_fitness_list = []     # List containing the fitness of each agent
-agent_count = 1500
-survive_frac = 0.04      # Fraction of agents to survive each generation
+agent_count = 2000
+survive_frac = 0.50      # Fraction of agents to survive each generation
 from_winners_ratio = 0.80    # Fraction of losing agents to be reproduced from winners vs themselved (with mutation)
 max_gene_turns = 180    # Maximum instructions to be performed by an agent
-winners_mut_c = 0.001   # Chance per turn that an agent from the winning group will get killed and replaced by a mutated random offspring
+winners_mut_c = 0.01   # Chance per turn that an agent from the winning group will get killed and replaced by a mutated random offspring
 best_fitness = 10000000
 guess_x = []
 guess_y = []
@@ -70,7 +70,7 @@ def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitn
     # Draw Histogram on the left side (1/3 of the screen)
     if log_fitness_values:
         max_log_fitness = max(log_fitness_values)
-        min_log_fitness = min(log_fitness_values)
+        min_log_fitness = min(log_fitness_values) - 1
     else:
         max_log_fitness = 1
         min_log_fitness = 0
@@ -227,7 +227,7 @@ def mutate_agent(genes_in, agent_state_count_in):
     genes_out = []
     agent_state_count_out = agent_state_count_in
     mut_c_m = random.uniform(0, 1)
-    max_mag = random.randint(-9, 0)
+    max_mag = random.randint(-9, 1)
     for i in range(0, len(genes_in)):  # Cycles through the genes to create a mutant
         a = genes_in[i][0]
         r = random.uniform(0, 1)
@@ -244,7 +244,7 @@ def mutate_agent(genes_in, agent_state_count_in):
         magnitude = genes_in[i][3]
         r = random.uniform(0, 1)
         if r < mut_c * mut_c_m:
-            magnitude = random.uniform(-1, 1) * 10 ** random.randint(-9, max_mag)
+            magnitude = random.uniform(-2, 2) * 10 ** random.randint(-9, max_mag)
             if magnitude < -2:
                 magnitude = -1
             if magnitude > 2:
