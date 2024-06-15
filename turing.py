@@ -38,15 +38,15 @@ state = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # the first node will be the input node, an
 # 5: index of instruction to go to if node a>= 0. One is subtracted from a
 # )
 # d = magnitude of transfer
-genes = [[0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 3, 1, 1], [3, 4, 1, 1], [4, 5, 1, 1], [5, 6, 1, 1], [6, 7, 1, 1], [7, 8, 1, 1]]
+genes = [[0, 0, 0, 0.1, 0.1, 0.1], [0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 3, 1, 1], [3, 4, 1, 1], [4, 5, 1, 1], [5, 6, 1, 1], [6, 7, 1, 1], [7, 8, 1, 1]]
 genes_m = []  # Genes of the mutant
 mut_c = .5
 it_C = 0
-test_points = 20
+test_points = 100
 agent_list = []             # List containing the genes/instructions for each agent
 agent_state_count_list = [] # List containing the number of nodes each agent has
 agent_fitness_list = []     # List containing the fitness of each agent
-agent_count = 2000
+agent_count = 5000
 survive_frac = 0.50      # Fraction of agents to survive each generation
 from_winners_ratio = 0.80    # Fraction of losing agents to be reproduced from winners vs themselved (with mutation)
 max_gene_turns = 180    # Maximum instructions to be performed by an agent
@@ -56,6 +56,7 @@ guess_x = []
 guess_y = []
 guess_g = []
 best_fitness_log = []
+min_gene_count = 5
 
 
 
@@ -150,8 +151,8 @@ def initialize_agent_state_count():
 def evaluate_agent(x_in, genes_inn, state_inn):
     state_inn[0] = x_in
     result = state_inn[-1]
-    i = 0
-    j = 0
+    i = 1
+    j = 1
     while(i < len(genes_inn)):  # Runs through the genes to execute the instructions
         a = genes_inn[i][0]
         if(a > len(state_inn) - 1):
@@ -223,12 +224,21 @@ def run_agent(genes_in, state_c_in):
         guess_g_out.append(result)
     return guess_x_out, guess_y_out, guess_g_out
 
+
+
 def mutate_agent(genes_in, agent_state_count_in):
     genes_out = []
     agent_state_count_out = agent_state_count_in
     mut_c_m = random.uniform(0, 1)
     max_mag = random.randint(-9, 1)
-    for i in range(0, len(genes_in)):  # Cycles through the genes to create a mutant
+    genes_out.append(genes_in[0])
+    for k in range(0, 6):
+        genes_out[0][k] += random.uniform(-0.001, 0.001)
+        if(genes_out[0][k] < 0):
+            genes_out[0][k] = 0
+        elif(genes_out[0][k] > 1):
+            genes_out[0][k] = 1
+    for i in range(1, len(genes_in)):  # Cycles through the genes to create a mutant
         a = genes_in[i][0]
         r = random.uniform(0, 1)
         if r < mut_c * mut_c_m:
@@ -252,18 +262,18 @@ def mutate_agent(genes_in, agent_state_count_in):
         genes_out.append([a, b, transfer_mode, magnitude])
     r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
-        ridx = random.randint(0, len(genes_out) - 1)
+        ridx = random.randint(1, len(genes_out) - 1)
         if(ridx < len(genes_out)):
-            genes_out.insert(ridx, genes_in[random.randint(0, len(genes_in) - 1)])
+            genes_out.insert(ridx, genes_in[random.randint(1, len(genes_in) - 1)])
     r = random.uniform(0, 1)
-    if r < mut_c * mut_c_m and len(genes_out) > 1:
-        genes_out.pop(random.randint(0, len(genes_out) - 1))
+    if r < mut_c * mut_c_m and len(genes_out) >= min_gene_count:
+        genes_out.pop(random.randint(1, len(genes_out) - 1))
     r = random.uniform(0, 1)
-    if r < mut_c * mut_c_m and len(genes_out) > 1:
+    if r < mut_c * mut_c_m and len(genes_out) >= min_gene_count:
         genes_out.pop(len(genes_out) - 1)
     r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
-        genes_out.append(genes_in[random.randint(0, len(genes_in) - 1)])
+        genes_out.append(genes_in[random.randint(1, len(genes_in) - 1)])
     r = random.uniform(0, 1)
     if r < mut_c * mut_c_m:
         agent_state_count_out += random.randint(-1, 1)
@@ -272,6 +282,45 @@ def mutate_agent(genes_in, agent_state_count_in):
     
     return genes_out, agent_state_count_out
 
+def reproduce_agent(genes_in, agent_state_count_in, agent_index):
+    best_fit = 10000000
+    best_partner = 0
+    genes_out = []
+    x = genes_in[0][0]
+    y = genes_in[0][1]
+    z = genes_in[0][2]
+    xM = genes_in[0][3]
+    yM = genes_in[0][4]
+    zM = genes_in[0][5]
+    for j in range(0, agent_count):
+        if(j == agent_index):
+            continue
+        x2 = agent_list[j][0][0]
+        y2 = agent_list[j][0][0]
+        z2 = agent_list[j][0][0]
+        xM2 = agent_list[j][0][0]
+        yM2 = agent_list[j][0][0]
+        zM2 = agent_list[j][0][0]
+
+        fit = (xM * xM2 * (x2 - x) ** 2 + yM * yM2 * (y2 - y) ** 2 + zM * zM2 * (z2 - z) ** 2) ** 0.5
+        if(fit < best_fit):
+            best_fit = fit
+            best_partner = j
+    if(len(agent_list[best_partner]) > len(genes_in)):
+        max_common_gene = len(genes_in)
+    else:
+        max_common_gene = len(agent_list[best_partner])
+    for i in range(0, max_common_gene):
+        r = random.uniform(0, 1)
+        if(r < 0.5):
+            genes_out.append(genes_in[i])
+        else:
+            genes_out.append(agent_list[best_partner][i])
+    if random.uniform(0, 1) < 0.5:
+        agent_state_count_out = agent_state_count_in
+    else:
+        agent_state_count_out = agent_state_count_list[best_partner]
+    return genes_out, agent_state_count_out
 
 
 
@@ -315,6 +364,17 @@ while True:
     else:
         best_fitness_log.append(0)
     
+    # Sexual Reproduction
+    reproduced_agents = []
+    reproduced_state_count = []
+    for i in range(0, agent_count):
+        temp_list = reproduce_agent(agent_list[i], agent_state_count_list[i], i)
+        reproduced_agents.append(temp_list[0])
+        reproduced_state_count.append(temp_list[1])
+    for i in range(0, agent_count):
+        agent_list[i] = reproduced_agents[i]
+        agent_state_count_list[i] = reproduced_state_count[i]
+
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
     for n in range(0, agent_count):
         if (n < int(survive_frac * agent_count)):
@@ -329,6 +389,19 @@ while True:
                 agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[index], agent_state_count_list[index])
             else:
                 agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[n], agent_state_count_list[n])
-        
+    if(it_C % 100 == 0):
+        list_outx = []
+        list_outy = []
+        list_outz = []
+        for ij in range(0, agent_count):
+            list_outx.append(agent_list[ij][0][0])
+            list_outy.append(agent_list[ij][0][1])
+            list_outz.append(agent_list[ij][0][2])
+        with open('species_infox.txt', 'w') as file:
+            file.write(str(list_outx))
+        with open('species_infoy.txt', 'w') as file:
+            file.write(str(list_outy))
+        with open('species_infoz.txt', 'w') as file:
+            file.write(str(list_outz))
     it_C += 1
     time.sleep(0.01)

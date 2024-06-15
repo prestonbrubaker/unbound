@@ -29,16 +29,28 @@ font = pygame.font.Font(None, FONT_SIZE)
 
 state = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # the first node will be the input node, and the last will be the output node.
 
-# a, b, c, d      a = index of the node to give, b = index of the node to receive, c = mode of transfer (0: constant amount sent over if the giving node is positive, 1: fraction of giving node sent to receiving node, 2: constant amount given without subtraction from receiving node or check, 3: sine of node a is taken to be node b), d = magnitude of transfer
+# a, b, c, d      a = index of the node to give, b = index of the node to receive, 
+#c = mode of transfer (0: constant amount sent over if the giving node is positive, 
+# 1: fraction of giving node sent to receiving node, 
+# 2: constant amount given without subtraction from receiving node or check, 
+# 3: sine of node a is added to node b, and subtracted from node a
+# 4: number of instructions to go backwards is the floor of node a, if node a >=0. One is subtracted from a
+# 5: index of instruction to go to if node a>= 0. One is subtracted from a
+# )
+# d = magnitude of transfer
 genes = [[0, 1, 1, 0.5], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 2, 1, 1], [2, 3, 1, 1], [3, 4, 1, 1], [4, 5, 1, 1], [5, 6, 1, 1], [6, 7, 1, 1], [7, 8, 1, 1]]
 genes_m = []  # Genes of the mutant
-mut_c = .9999
+mut_c = .5
 it_C = 0
-test_points = 100
+test_points = 20
 agent_list = []             # List containing the genes/instructions for each agent
 agent_state_count_list = [] # List containing the number of nodes each agent has
 agent_fitness_list = []     # List containing the fitness of each agent
-agent_count = 500
+agent_count = 2000
+survive_frac = 0.50      # Fraction of agents to survive each generation
+from_winners_ratio = 0.80    # Fraction of losing agents to be reproduced from winners vs themselved (with mutation)
+max_gene_turns = 180    # Maximum instructions to be performed by an agent
+winners_mut_c = 0.01   # Chance per turn that an agent from the winning group will get killed and replaced by a mutated random offspring
 best_fitness = 10000000
 guess_x = []
 guess_y = []
@@ -58,14 +70,14 @@ def draw(fitness_values, guess_x, guess_y, guess_g, fitness_log, it_C, best_fitn
     # Draw Histogram on the left side (1/3 of the screen)
     if log_fitness_values:
         max_log_fitness = max(log_fitness_values)
-        min_log_fitness = min(log_fitness_values)
+        min_log_fitness = min(log_fitness_values) - 1
     else:
         max_log_fitness = 1
         min_log_fitness = 0
         
     range_log_fitness = max_log_fitness - min_log_fitness if max_log_fitness != min_log_fitness else 1
     num_bars = min(len(log_fitness_values), (SCREEN_WIDTH // 3) // BAR_WIDTH)
-    red_threshold = int(num_bars * 0.1)
+    red_threshold = int(num_bars * survive_frac)
     
     for i in range(num_bars):
         log_fitness = log_fitness_values[-(i+1)]  # Start from the end (highest fitness)
@@ -137,7 +149,9 @@ def initialize_agent_state_count():
 
 def evaluate_agent(x_in, genes_inn, state_inn):
     state_inn[0] = x_in
+    result = state_inn[-1]
     i = 0
+    j = 0
     while(i < len(genes_inn)):  # Runs through the genes to execute the instructions
         a = genes_inn[i][0]
         if(a > len(state_inn) - 1):
@@ -161,8 +175,19 @@ def evaluate_agent(x_in, genes_inn, state_inn):
             if(state_inn[a] > 0):
                 state_inn[b] += math.sin(state_inn[a])
                 state_inn[a] -= math.sin(state_inn[a])
+        elif transfer_mode == 4:
+            if(state_inn[a] > 0 and state_inn[a] < i):
+                i -= math.floor(state_inn[a])
+                state_inn[a] -= 1
+        elif transfer_mode == 5:
+            if(state_inn[a] > 0):
+                i = math.floor(state_inn[a])
+                state_inn[a] -= 1
         i += 1
-    result = state_inn[-1]
+        j += 1
+        if(j >= max_gene_turns):
+            return state_inn[-1]
+        result = state_inn[-1]
     return result
 
 def test_agent(genes_in, state_c_in):
@@ -202,7 +227,7 @@ def mutate_agent(genes_in, agent_state_count_in):
     genes_out = []
     agent_state_count_out = agent_state_count_in
     mut_c_m = random.uniform(0, 1)
-    max_mag = random.randint(-9, 0)
+    max_mag = random.randint(-9, 1)
     for i in range(0, len(genes_in)):  # Cycles through the genes to create a mutant
         a = genes_in[i][0]
         r = random.uniform(0, 1)
@@ -215,11 +240,11 @@ def mutate_agent(genes_in, agent_state_count_in):
         transfer_mode = genes_in[i][2]
         r = random.uniform(0, 1)
         if r < mut_c * mut_c_m:
-            transfer_mode = random.randint(0, 3)
+            transfer_mode = random.randint(0, 5)
         magnitude = genes_in[i][3]
         r = random.uniform(0, 1)
         if r < mut_c * mut_c_m:
-            magnitude = random.uniform(-1, 1) * 10 ** random.randint(-9, max_mag)
+            magnitude = random.uniform(-2, 2) * 10 ** random.randint(-9, max_mag)
             if magnitude < -2:
                 magnitude = -1
             if magnitude > 2:
@@ -291,13 +316,19 @@ while True:
         best_fitness_log.append(0)
     
     # Replace the highest fitness agents with mutated versions of the lowest fitness agents
-    for n in range(int(0.2 * agent_count), agent_count):
-        r = random.uniform(0, 1)
-        if(r < 0.85):
-            index = random.randint(0, int(agent_count * .2))
-            agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[index], agent_state_count_list[index])
+    for n in range(0, agent_count):
+        if (n < int(survive_frac * agent_count)):
+            r = random.uniform(0, 1)
+            if(r < winners_mut_c):
+                index = random.randint(0, int(agent_count * survive_frac * random.uniform(0,1)))
+                agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[index], agent_state_count_list[index])
         else:
-            agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[n], agent_state_count_list[n])
-    
+            r = random.uniform(0, 1)
+            if(r < from_winners_ratio):
+                index = random.randint(0, int(agent_count * survive_frac * random.uniform(0,1)))
+                agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[index], agent_state_count_list[index])
+            else:
+                agent_list[n], agent_state_count_list[n] = mutate_agent(agent_list[n], agent_state_count_list[n])
+        
     it_C += 1
     time.sleep(0.01)
